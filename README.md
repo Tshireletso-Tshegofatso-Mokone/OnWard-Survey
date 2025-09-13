@@ -156,11 +156,10 @@
         <!-- Confirmation Message -->
         <div id="confirmation" class="hidden text-center">
             <h2 class="text-2xl font-bold text-onward-blue mb-4">Thank You!</h2>
-            <p class="text-gray-600 mt-4">Your feedback has been submitted and saved securely. We appreciate your time and input.</p>
+            <p id="confirmation-message" class="text-gray-600 mt-4"></p>
             <div class="flex justify-center mt-6">
                 <button id="start-new-survey" class="btn-onward py-2 px-6 rounded-lg shadow-md">Start New Survey</button>
             </div>
-            <div id="user-id-display" class="mt-4 text-sm text-gray-500"></div>
         </div>
 
     </div>
@@ -179,11 +178,11 @@
             const confirmation = document.getElementById('confirmation');
             const slideshowImages = document.querySelectorAll('.background-slideshow img');
             const submissionsList = document.getElementById('submissions-list');
-            const userIdDisplay = document.getElementById('user-id-display');
             const adminLink = document.getElementById('admin-link');
             const backToSurveyBtn = document.getElementById('back-to-survey-btn');
             const startNewSurveyBtn = document.getElementById('start-new-survey');
             const logoutBtn = document.getElementById('logout-btn');
+            const confirmationMessage = document.getElementById('confirmation-message');
             
             let currentIndex = 0;
             let db;
@@ -370,7 +369,6 @@
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userId = user.uid;
-                    userIdDisplay.textContent = `Your user ID for secure storage: ${userId}`;
                     console.log('Authenticated with user ID:', userId);
                 } else {
                     console.log('No user signed in. Attempting anonymous sign-in.');
@@ -426,10 +424,8 @@
                 submissionsList.innerHTML = '<p class="text-center text-gray-500">Loading submissions...</p>';
                 
                 try {
-                    // FIX: Changed the path to read from the current user's private collection
-                    // to fix the "Missing or insufficient permissions" error.
-                    // This will only show the current user's submissions.
-                    const submissionsRef = collection(db, `artifacts/${appId}/users/${userId}/surveyResponses`);
+                    // FIX: Changed the path back to the public collection so that all submissions are visible to the admin.
+                    const submissionsRef = collection(db, `artifacts/${appId}/public/data/surveySubmissions`);
                     const querySnapshot = await getDocs(submissionsRef);
                     const submissions = [];
                     querySnapshot.forEach(doc => {
@@ -456,7 +452,7 @@
                     }
                 } catch (error) {
                     console.error("Error fetching documents:", error);
-                    submissionsList.innerHTML = '<p class="text-center text-red-500">Error loading data. Please try again.</p>';
+                    submissionsList.innerHTML = '<p class="text-center text-red-500">Error loading data. Please check permissions.</p>';
                 }
             }
 
@@ -680,6 +676,7 @@
                 await addDoc(collection(db, publicResponsesPath), responseData);
 
                 console.log("Survey responses saved successfully!");
+                confirmationMessage.textContent = `Your feedback has been submitted successfully. Thank you for your time and input.`;
                 showView('confirmation');
             }
             
